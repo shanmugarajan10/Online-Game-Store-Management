@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Games - JK Repacks{% endblock %}
+
+{% block content %}
+<div class="game-list-container">
+    <!-- Filters Sidebar -->
+    <div class="filters-sidebar">
+        <div class="filters-header">
+            <h3 class="neon-text">Filters</h3>
+            <button class="btn btn-cyberpunk btn-sm" id="clearFilters">
+                <i class="fas fa-times"></i> Clear All
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="filter-section">
+            <h4>Search</h4>
+            <form action="{% url 'store:game_list' %}" method="get" class="search-form">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control cyberpunk-input" 
+                           placeholder="Search games..." value="{{ request.GET.search }}">
+                    <button type="submit" class="btn btn-cyberpunk">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Categories -->
+        <div class="filter-section">
+            <h4>Categories</h4>
+            <div class="category-filters">
+                {% for category in categories %}
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" 
+                           name="category" value="{{ category.slug }}"
+                           id="category-{{ category.slug }}"
+                           {% if category.slug in request.GET.getlist.category %}checked{% endif %}>
+                    <label class="form-check-label" for="category-{{ category.slug }}">
+                        {{ category.name }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-section">
+            <h4>Price Range</h4>
+            <div class="price-range">
+                <input type="range" class="form-range" id="priceRange" 
+                       min="0" max="100" step="1"
+                       value="{{ request.GET.price|default:'100' }}">
+                <div class="price-inputs">
+                    <input type="number" class="form-control cyberpunk-input" 
+                           name="min_price" placeholder="Min" 
+                           value="{{ request.GET.min_price|default:'0' }}">
+                    <span>-</span>
+                    <input type="number" class="form-control cyberpunk-input" 
+                           name="max_price" placeholder="Max" 
+                           value="{{ request.GET.max_price|default:'100' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Sort Options -->
+        <div class="filter-section">
+            <h4>Sort By</h4>
+            <select class="form-select cyberpunk-input" name="sort" id="sortSelect">
+                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest First</option>
+                <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="name_asc" {% if request.GET.sort == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+                <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
+            </select>
+        </div>
+
+        <!-- Apply Filters Button -->
+        <button type="submit" class="btn btn-cyberpunk btn-block" id="applyFilters">
+            <i class="fas fa-filter"></i> Apply Filters
+        </button>
+    </div>
+
+    <!-- Games Grid -->
+    <div class="games-grid">
+        <div class="games-header">
+            <h2 class="neon-text">Browse Games</h2>
+            <div class="view-options">
+                <button class="btn btn-cyberpunk btn-sm active" data-view="grid">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button class="btn btn-cyberpunk btn-sm" data-view="list">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+
+        {% if games %}
+        <div class="games-container grid-view">
+            {% for game in games %}
+            <div class="game-card">
+                <div class="game-image">
+                    {% if game.image %}
+                    <img src="{{ game.image.url }}" alt="{{ game.title }}" class="img-fluid">
+                    {% else %}
+                    <img src="{% static 'images/placeholder.jpg' %}" alt="{{ game.title }}" class="img-fluid">
+                    {% endif %}
+                    <div class="game-overlay">
+                        <div class="game-actions">
+                            <a href="{% url 'store:game_detail' game.slug %}" class="btn btn-cyberpunk">
+                                <i class="fas fa-info-circle"></i> Details
+                            </a>
+                            <button class="btn btn-cyberpunk add-to-cart" data-game-id="{{ game.id }}">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-info">
+                    <h3 class="game-title">{{ game.title }}</h3>
+                    <div class="game-meta">
+                        <span class="game-category">{{ game.category.name }}</span>
+                        <span class="game-price">${{ game.price }}</span>
+                    </div>
+                    <p class="game-description">{{ game.description|truncatewords:20 }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if games.has_other_pages %}
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if games.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ games.previous_page_number }}" aria-label="Previous">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in games.paginator.page_range %}
+                    <li class="page-item {% if games.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if games.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ games.next_page_number }}" aria-label="Next">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="no-games">
+            <i class="fas fa-gamepad"></i>
+            <h3>No Games Found</h3>
+            <p>Try adjusting your filters or search criteria</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.game-list-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+/* Filters Sidebar */
+.filters-sidebar {
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid var(--neon-blue);
+    border-radius: 10px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.filter-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(5, 217, 232, 0.2);
+}
+
+.filter-section:last-child {
+    border-bottom: none;
+}
+
+.filter-section h4 {
+    color: var(--neon-blue);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.category-filters {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.category-filters::-webkit-scrollbar {
+    width: 4px;
+}
+
+.category-filters::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+}
+
+.category-filters::-webkit-scrollbar-thumb {
+    background: var(--neon-blue);
+    border-radius: 2px;
+}
+
+.form-check {
+    margin-bottom: 0.5rem;
+}
+
+.form-check-input {
+    background-color: var(--dark-bg);
+    border-color: var(--neon-blue);
+}
+
+.form-check-input:checked {
+    background-color: var(--neon-blue);
+    border-color: var(--neon-blue);
+}
+
+.price-range {
+    margin-top: 1rem;
+}
+
+.price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.price-inputs input {
+    width: 80px;
+}
+
+/* Games Grid */
+.games-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.view-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.games-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.games-container.list-view {
+    grid-template-columns: 1fr;
+}
+
+.games-container.list-view .game-card {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1rem;
+}
+
+.game-card {
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid var(--neon-blue);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(5, 217, 232, 0.3);
+}
+
+.game-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.game-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 10, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.game-card:hover .game-overlay {
+    opacity: 1;
+}
+
+.game-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+}
+
+.game-info {
+    padding: 1rem;
+}
+
+.game-title {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--neon-blue);
+}
+
+.game-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.game-category {
+    font-size: 0.9rem;
+    color: var(--neon-pink);
+}
+
+.game-price {
+    font-weight: bold;
+    color: var(--neon-blue);
+}
+
+.game-description {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin-bottom: 0;
+}
+
+/* Pagination */
+.pagination-container {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-link {
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid var(--neon-blue);
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background: var(--neon-blue);
+    color: var(--dark-bg);
+}
+
+.page-item.active .page-link {
+    background: var(--neon-blue);
+    color: var(--dark-bg);
+    border-color: var(--neon-blue);
+}
+
+/* No Games Found */
+.no-games {
+    text-align: center;
+    padding: 3rem;
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid var(--neon-blue);
+    border-radius: 10px;
+}
+
+.no-games i {
+    font-size: 3rem;
+    color: var(--neon-blue);
+    margin-bottom: 1rem;
+}
+
+.no-games h3 {
+    color: var(--neon-pink);
+    margin-bottom: 0.5rem;
+}
+
+.no-games p {
+    color: var(--text-color);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .game-list-container {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-sidebar {
+        position: static;
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .games-container {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .games-container.list-view .game-card {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View Toggle
+    const viewButtons = document.querySelectorAll('.view-options button');
+    const gamesContainer = document.querySelector('.games-container');
+
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            gamesContainer.className = `games-container ${this.dataset.view}-view`;
+        });
+    });
+
+    // Price Range
+    const priceRange = document.getElementById('priceRange');
+    const maxPriceInput = document.querySelector('input[name="max_price"]');
+
+    priceRange.addEventListener('input', function() {
+        maxPriceInput.value = this.value;
+    });
+
+    // Clear Filters
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        const inputs = document.querySelectorAll('.filters-sidebar input, .filters-sidebar select');
+        inputs.forEach(input => {
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+        priceRange.value = 100;
+        maxPriceInput.value = 100;
+    });
+
+    // Add to Cart
+    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const gameId = this.dataset.gameId;
+            fetch(`/store/cart/add/${gameId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCount();
+                    showNotification('Game added to cart!', 'success');
+                } else {
+                    showNotification(data.message || 'Error adding game to cart', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error adding game to cart', 'error');
+            });
+        });
+    });
+
+    // Helper Functions
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    function updateCartCount() {
+        fetch('/store/cart/count/')
+            .then(response => response.json())
+            .then(data => {
+                const cartCount = document.querySelector('.cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.count;
+                }
+            });
+    }
+});
+</script>
+{% endblock %} 

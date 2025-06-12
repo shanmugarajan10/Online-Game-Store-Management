@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Orders - JK - Repacks{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 neon-text">Your Orders</h1>
+
+{% if orders %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Total Amount</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr class="bg-cyber-dark">
+                    <th scope="row"><a href="{% url 'store:order_detail' order.id %}" class="neon-text">#{{ order.id }}</a></th>
+                    <td class="neon-pink">{{ order.order_date|date:"F j, Y, P" }}</td>
+                    <td class="neon-text">${{ order.total_amount }}</td>
+                    <td><span class="badge bg-{{ order.get_status_display|lower }}">{{ order.get_status_display }}</span></td>
+                    <td>
+                        <a href="{% url 'store:order_detail' order.id %}" class="btn btn-sm btn-info btn-cyberpunk">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info bg-cyber-dark neon-text" role="alert">
+        You haven't placed any orders yet. <a href="{% url 'store:game_list' %}" class="neon-pink">Start shopping now!</a>
+    </div>
+{% endif %}
+{% endblock %} 

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Checkout - JK - Repacks{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 neon-text">Checkout</h1>
+
+{% if cart.items.all %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header neon-text">
+                    Order Summary
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for item in cart.items.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-cyber-dark">
+                            <div>
+                                {{ item.game.title }} (x{{ item.quantity }})
+                                <br>
+                                <small class="text-muted neon-pink">${{ item.game.price }} each</small>
+                            </div>
+                            <span class="fw-bold neon-text">${{ item.subtotal|default:item.game.price|mul:item.quantity }}</span>
+                        </li>
+                    {% endfor %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-cyber-dark">
+                        <strong>Total Amount:</strong>
+                        <span class="fw-bold neon-text">${{ cart_total }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header neon-text">
+                    Shipping Information
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="shipping_address" class="form-label">Shipping Address</label>
+                            <textarea class="form-control" id="shipping_address" name="shipping_address" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 btn-cyberpunk">Place Order</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title neon-text">Total to Pay</h5>
+                    <p class="display-4 fw-bold neon-text">${{ cart_total }}</p>
+                    <p class="text-muted">Final amount including all items in your cart.</p>
+                    <a href="{% url 'store:cart' %}" class="btn btn-outline-secondary w-100 mt-3 btn-cyberpunk">Back to Cart</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="alert alert-info bg-cyber-dark neon-text" role="alert">
+        Your cart is empty. Please add items to proceed to checkout. <a href="{% url 'store:game_list' %}" class="neon-pink">Browse games</a>.
+    </div>
+{% endif %}
+{% endblock %} 
