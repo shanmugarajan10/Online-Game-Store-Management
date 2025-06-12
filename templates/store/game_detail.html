@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ game.title }} - JK - Repacks{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            {% if game.image %}
+                <img src="{{ game.image.url }}" class="card-img-top" alt="{{ game.title }}">
+            {% else %}
+                <img src="https://via.placeholder.com/800x450?text=No+Image+Available" class="card-img-top" alt="{{ game.title }}">
+            {% endif %}
+            <div class="card-body">
+                <h1 class="card-title neon-text">{{ game.title }}</h1>
+                <h4 class="text-primary mb-3 neon-text">${{ game.price }}</h4>
+                <p class="card-text"><strong>Category:</strong> <a href="{% url 'store:game_list' %}?category={{ game.category.slug }}" class="neon-pink">{{ game.category.name }}</a></p>
+                <p class="card-text"><strong>Developer:</strong> {{ game.developer }}</p>
+                <p class="card-text"><strong>Publisher:</strong> {{ game.publisher }}</p>
+                <p class="card-text"><strong>Platform:</strong> {{ game.platform }}</p>
+                <p class="card-text"><strong>Release Date:</strong> {{ game.release_date|date:"F j, Y" }}</p>
+                <hr>
+                <h5 class="neon-text">Description:</h5>
+                <p class="card-text">{{ game.description|linebreaksbr }}</p>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    {% if game.stock > 0 %}
+                        <span class="badge bg-success">In Stock ({{ game.stock }})</span>
+                        <form action="{% url 'store:add_to_cart' game.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-cyberpunk"><i class="bi bi-cart-plus"></i> Add to Cart</button>
+                        </form>
+                    {% else %}
+                        <span class="badge bg-danger">Out of Stock</span>
+                        <button type="button" class="btn btn-secondary btn-cyberpunk" disabled>Out of Stock</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title neon-text">Related Games</h5>
+                {% if related_games %}
+                    <ul class="list-group list-group-flush">
+                        {% for related_game in related_games %}
+                        <li class="list-group-item d-flex align-items-center bg-cyber-dark">
+                            {% if related_game.image %}
+                                <img src="{{ related_game.image.url }}" alt="{{ related_game.title }}" class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                            {% else %}
+                                <img src="https://via.placeholder.com/60x60" alt="{{ related_game.title }}" class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0"><a href="{% url 'store:game_detail' related_game.slug %}" class="neon-text">{{ related_game.title }}</a></h6>
+                                <small class="text-muted neon-pink">${{ related_game.price }}</small>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No related games found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %} 

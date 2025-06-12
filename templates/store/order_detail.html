@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.id }} - JK - Repacks{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 neon-text">Order Details #{{ order.id }}</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header neon-text">
+                Order Information
+            </div>
+            <div class="card-body">
+                <p><strong>Order Date:</strong> <span class="neon-pink">{{ order.created_at|date:"F j, Y, P" }}</span></p>
+                <p><strong>Status:</strong> <span class="badge bg-{% if order.status == 'pending' %}warning{% elif order.status == 'shipped' %}info{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %}">{{ order.status|capfirst }}</span></p>
+                <p><strong>Total Amount:</strong> <span class="neon-text">${{ order.total_amount }}</span></p>
+                <p><strong>Shipping Address:</strong> <span class="text-muted">{{ order.shipping_address|linebreaksbr }}</span></p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header neon-text">
+                Items in this Order
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Game</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.orderitem_set.all %}
+                        <tr class="bg-cyber-dark">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.game.image %}
+                                        <img src="{{ item.game.image.url }}" alt="{{ item.game.title }}" class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/60x60" alt="{{ item.game.title }}" class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                    {% endif %}
+                                    <a href="{% url 'store:game_detail' item.game.slug %}" class="neon-text">{{ item.game.title }}</a>
+                                </div>
+                            </td>
+                            <td class="neon-pink">${{ item.game.price }}</td>
+                            <td class="neon-pink">{{ item.quantity }}</td>
+                            <td class="neon-text">${{ item.price|mul:item.quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <a href="{% url 'store:order_list' %}" class="btn btn-primary btn-cyberpunk mt-3">Back to Orders</a>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title neon-text">Customer Information</h5>
+                <p class="text-muted"><strong>User:</strong> {{ order.user.username }}</p>
+                <p class="text-muted"><strong>Email:</strong> {{ order.user.email }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
